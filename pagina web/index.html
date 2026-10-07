@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Propostas — CompAct Jr.</title>
+  
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Carrois+Gothic&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Ícones Phosphor -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Estilo Customizado -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- PAINEL EDITOR -->
+  <div id="editor-panel" class="editor-ui-element">
+    <h3><i class="ph ph-magic-wand"></i> Modificador de Proposta</h3>
+    <button id="toggle-edit-btn" class="editor-btn" style="margin-bottom: 0.5rem;" onclick="toggleEditMode()">
+      <i class="ph ph-pencil-simple"></i> Habilitar Edição
+    </button>
+    
+    <div id="edit-tools" style="display: none; flex-direction: column; gap: 1rem;">
+      <!-- CONTROLES DE SLIDE -->
+      <div style="background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+        <p style="font-size: 0.65rem; font-weight: bold; color: var(--secondary); margin-bottom: 0.5rem; letter-spacing: 1px;">GERENCIAR SLIDES</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+          <button class="editor-btn" onclick="addSlide()"><i class="ph ph-plus"></i> Novo Slide</button>
+          <button class="editor-btn" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5;" onclick="removeSlide()"><i class="ph ph-trash"></i> Apagar</button>
+          <button class="editor-btn" style="grid-column: span 2;" onclick="cycleTheme()"><i class="ph ph-palette"></i> Alterar Cor de Fundo</button>
+        </div>
+      </div>
+
+      <!-- INSERIR ELEMENTOS LIVRES -->
+      <div style="background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+        <p style="font-size: 0.65rem; font-weight: bold; color: var(--secondary); margin-bottom: 0.5rem; letter-spacing: 1px;">INSERIR & MOVER</p>
+        <p style="font-size: 0.65rem; color: #94A3B8; margin-bottom: 0.5rem;">Os elementos inseridos podem ser arrastados livremente usando a âncora azul no canto.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+          <button class="editor-btn" onclick="insertElement('title')"><i class="ph ph-text-t"></i> Título</button>
+          <button class="editor-btn" onclick="insertElement('text')"><i class="ph ph-text-align-left"></i> Texto</button>
+          <button class="editor-btn" style="grid-column: span 2;" onclick="insertElement('box')"><i class="ph ph-square"></i> Caixa Customizável</button>
+        </div>
+      </div>
+
+      <!-- FERRAMENTAS DE CORES & SELEÇÃO -->
+      <div style="background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+        <p style="font-size: 0.65rem; font-weight: bold; color: var(--secondary); margin-bottom: 0.5rem; letter-spacing: 1px;">CUSTOMIZAR SELEÇÃO</p>
+        <p style="font-size: 0.65rem; color: #94A3B8; margin-bottom: 0.5rem;">Clique no texto ou fundo de um bloco para selecioná-lo e pintá-lo.</p>
+        <input type="color" id="colorPicker" value="#00a7db" style="width: 100%; height: 35px; border: none; cursor: pointer; border-radius: 4px; padding: 0; background: transparent; margin-bottom: 0.4rem;">
+        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.4rem;">
+          <button class="editor-btn" style="flex: 1;" onclick="applyColor('bg')">Fundo</button>
+          <button class="editor-btn" style="flex: 1;" onclick="applyColor('text')">Texto</button>
+          <button class="editor-btn" style="flex: 1;" onclick="applyColor('border')">Borda</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem;">
+          <button class="editor-btn" onclick="clearColor()">Limpar Cor</button>
+          <button class="editor-btn" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;" onclick="deleteSelected()"><i class="ph ph-trash"></i> Excluir</button>
+        </div>
+      </div>
+    </div>
+    
+    <hr style="border-color: rgba(255,255,255,0.1); margin: 0.5rem 0;">
+    <button class="editor-btn" style="background: var(--secondary); color: var(--heading-dark); font-size: 0.85rem; padding: 0.8rem;" onclick="downloadFinalHTML()">
+      <i class="ph ph-download-simple"></i> Baixar HTML Final
+    </button>
+  </div>
+
+  <div id="topbadge">
+    <div class="badge" id="counter">01 / 09 · Capa</div>
+    <button class="badge" onclick="window.print()" style="background: var(--secondary); border-color: var(--secondary); color: var(--heading-dark); cursor: pointer;"><i class="ph ph-printer"></i> Imprimir PDF</button>
+  </div>
+
+  <div id="deck">
+    <div id="viewport">
+      <div id="track">
+
+        <!-- 01. CAPA -->
+        <div class="slide bg-dark">
+          <div class="content" style="text-align: center;">
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+              <span class="badge editable-field" style="border-color: var(--secondary); background: transparent; color: var(--secondary);">CompAct Jr.</span>
+              <span class="badge" style="background: transparent; border:none; color: var(--text-light);"><i class="ph ph-x"></i></span>
+              <span class="badge editable-field" style="border-color: var(--primary-light); background: transparent;">[Nome do Cliente]</span>
+            </div>
+            <h1 class="title editable-field">Proposta de <br><span style="color: var(--secondary);">Desenvolvimento Web</span></h1>
+            <p class="subtitle editable-field" style="margin: 0 auto;">Documento oficial de escopo, metodologia e investimento para a construção da sua presença digital.</p>
+            
+            <div class="grid-3" style="margin-top: 3rem; text-align: left; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; border-top: 3px solid var(--secondary);">
+              <div>
+                <p class="editable-field" style="font-size: 0.7rem; color: var(--secondary); font-weight: bold; letter-spacing: 1px; font-family: 'Carrois Gothic', sans-serif;">ENTREGÁVEL</p>
+                <p class="editable-field" style="font-size: 1.1rem; font-weight: 600; color: var(--heading-light);">Website Profissional</p>
+              </div>
+              <div>
+                <p class="editable-field" style="font-size: 0.7rem; color: var(--secondary); font-weight: bold; letter-spacing: 1px; font-family: 'Carrois Gothic', sans-serif;">DATA</p>
+                <p class="editable-field" style="font-size: 1.1rem; font-weight: 600; color: var(--heading-light);">Julho 2026</p>
+              </div>
+              <div>
+                <p class="editable-field" style="font-size: 0.7rem; color: var(--secondary); font-weight: bold; letter-spacing: 1px; font-family: 'Carrois Gothic', sans-serif;">VALIDADE</p>
+                <p class="editable-field" style="font-size: 1.1rem; font-weight: 600; color: var(--heading-light);">15 dias úteis</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 02. QUEM SOMOS COMPACT -->
+        <div class="slide bg-blue">
+          <div class="content">
+            <span class="tag editable-field">01 · a compact jr.</span>
+            <h2 class="title editable-field">Excelência ligada à <br>Universidade Federal.</h2>
+            <p class="subtitle editable-field">Somos a Empresa Júnior de Computação da UFSM. Entregamos soluções tecnológicas de alto nível, conectando o rigor acadêmico com a velocidade do mercado.</p>
+            
+            <div class="grid-4">
+              <div class="about-card">
+                <i class="ph ph-student"></i>
+                <h3 class="editable-field">Vínculo UFSM</h3>
+                <p class="editable-field">Projetos apoiados pela infraestrutura e professores doutores dos cursos de Computação.</p>
+              </div>
+              <div class="about-card">
+                <i class="ph ph-rocket-launch"></i>
+                <h3 class="editable-field">Rede MEJ</h3>
+                <p class="editable-field">Parte do Movimento Empresa Júnior, focando em aprendizado com custos acessíveis.</p>
+              </div>
+              <div class="about-card">
+                <i class="ph ph-shield-check"></i>
+                <h3 class="editable-field">Qualidade</h3>
+                <p class="editable-field">Utilizamos as linguagens e arquiteturas de software mais atuais do mercado global.</p>
+              </div>
+              <div class="about-card" style="background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.1); border-left-color: var(--secondary);">
+                <i class="ph ph-code-block" style="color: var(--secondary);"></i>
+                <h3 class="editable-field" style="color: var(--secondary);">Nossos Serviços</h3>
+                <ul class="service-list">
+                  <li class="editable-field"><i class="ph ph-caret-right" style="color: var(--secondary); font-size: 1rem;"></i> Sites & Landing Pages</li>
+                  <li class="editable-field"><i class="ph ph-caret-right" style="color: var(--secondary); font-size: 1rem;"></i> Sistemas Web</li>
+                  <li class="editable-field"><i class="ph ph-caret-right" style="color: var(--secondary); font-size: 1rem;"></i> Automação & Chatbots</li>
+                  <li class="editable-field"><i class="ph ph-caret-right" style="color: var(--secondary); font-size: 1rem;"></i> Apps Mobile</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 03. O PROBLEMA -->
+        <div class="slide bg-light">
+          <div class="content">
+            <span class="tag editable-field">02 · o cenário atual</span>
+            <h2 class="title editable-field">Entendendo a sua dor:<br>O que identificamos?</h2>
+            <p class="subtitle editable-field" style="margin-bottom: 2rem;">Durante nosso diagnóstico, percebemos gargalos claros que impedem a sua marca de captar orçamentos e passar a credibilidade que seu serviço exige.</p>
+            
+            <div class="grid-2">
+              <div class="problem-card">
+                <h3 class="editable-field"><i class="ph ph-browser" style="color: var(--primary-light); font-size: 1.8rem;"></i> Presença Online Defasada</h3>
+                <p class="editable-field">Atualmente, o cliente pesquisa pela sua marca e não encontra uma página oficial que passe segurança. A falta de um site institucional afasta leads logo no primeiro contato.</p>
+              </div>
+              <div class="problem-card">
+                <h3 class="editable-field"><i class="ph ph-device-mobile-camera" style="color: var(--primary-light); font-size: 1.8rem;"></i> Tráfego Não Convertido</h3>
+                <p class="editable-field">A maioria das pesquisas hoje ocorre pelo celular. Sem uma página central, estruturada e com botões de ação claros, os visitantes visualizam seu conteúdo, mas não solicitam orçamentos.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 04. A SOLUÇÃO -->
+        <div class="slide bg-dark">
+          <div class="content">
+            <span class="tag editable-field">03 · a nossa solução</span>
+            <h2 class="title editable-field">Como a CompAct Jr. vai <br><span style="color: var(--secondary);">resolver isso?</span></h2>
+            <p class="subtitle editable-field">Não entregamos apenas "código". Desenvolvemos um ativo digital focado em conversão, construído sob três pilares fundamentais.</p>
+            
+            <div class="grid-3">
+              <div class="solution-card">
+                <i class="ph ph-paint-brush-broad" style="font-size: 2.2rem; color: var(--secondary); margin-bottom: 0.8rem;"></i>
+                <h3 class="editable-field" style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--heading-light);">Design Estratégico</h3>
+                <p class="editable-field" style="font-size: 0.85rem; line-height: 1.5;">Layouts modernos que seguem a sua identidade, estruturados para guiar a leitura do usuário diretamente para os botões de ação.</p>
+              </div>
+              <div class="solution-card">
+                <i class="ph ph-lightning" style="font-size: 2.2rem; color: var(--secondary); margin-bottom: 0.8rem;"></i>
+                <h3 class="editable-field" style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--heading-light);">Alta Performance</h3>
+                <p class="editable-field" style="font-size: 0.85rem; line-height: 1.5;">Programação otimizada para carregamento rápido (ideal para ranqueamento no Google) e infraestrutura em nuvem de ponta.</p>
+              </div>
+              <div class="solution-card">
+                <i class="ph ph-lock-key" style="font-size: 2.2rem; color: var(--secondary); margin-bottom: 0.8rem;"></i>
+                <h3 class="editable-field" style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--heading-light);">Código Próprio</h3>
+                <p class="editable-field" style="font-size: 0.85rem; line-height: 1.5;">Sem dependência de construtores lentos. Entregamos um sistema limpo, escalável e 100% de sua propriedade.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 05. ESCOPO TÉCNICO -->
+        <div class="slide bg-blue">
+          <div class="content">
+            <span class="tag editable-field">04 · escopo técnico</span>
+            <h2 class="title editable-field">O que compõe o <br>seu novo Website?</h2>
+            <p class="subtitle editable-field">Detalhes técnicos e funcionalidades mapeadas exclusivamente para o seu projeto.</p>
+            
+            <div class="tabs-container">
+              <button class="tab-btn active editable-field" onclick="openTab('tab-estrutura', this)">Páginas Base</button>
+              <button class="tab-btn editable-field" onclick="openTab('tab-performance', this)">Performance</button>
+              <button class="tab-btn editable-field" onclick="openTab('tab-gestao', this)">Gestão Web</button>
+            </div>
+
+            <div class="tabs-wrapper">
+                <div id="tab-estrutura" class="tab-content active">
+                  <h3 class="editable-field" style="font-size: 1.2rem; margin-bottom: 1rem;"><i class="ph ph-file-html"></i> Arquitetura</h3>
+                  <p class="editable-field" style="line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">O projeto contempla o desenvolvimento das seguintes seções essenciais:</p>
+                  <ul style="list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                    <li class="editable-field"><strong>Home:</strong> Apresentação.</li>
+                    <li class="editable-field"><strong>Catálogo:</strong> Soluções.</li>
+                    <li class="editable-field"><strong>Sobre:</strong> Confiança.</li>
+                    <li class="editable-field"><strong>Contato:</strong> Captura.</li>
+                  </ul>
+                  <div class="editable-field" style="background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 4px; font-size: 0.75rem;">
+                    <strong>Nota:</strong> Custos de Domínio e Hospedagem não inclusos.
+                  </div>
+                </div>
+
+                <div id="tab-performance" class="tab-content">
+                  <h3 class="editable-field" style="font-size: 1.2rem; margin-bottom: 1rem;"><i class="ph ph-device-mobile"></i> Acessibilidade</h3>
+                  <p class="editable-field" style="line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">Foco absoluto na experiência do usuário.</p>
+                  <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.85rem;">
+                    <li class="editable-field"><strong>Design Responsivo:</strong> Adaptação para celulares e tablets.</li>
+                    <li class="editable-field"><strong>Otimização de Imagens:</strong> Compressão moderna (WebP).</li>
+                    <li class="editable-field"><strong>SEO Estrutural:</strong> Preparação para ranqueamento Google.</li>
+                  </ul>
+                </div>
+
+                <div id="tab-gestao" class="tab-content">
+                  <h3 class="editable-field" style="font-size: 1.2rem; margin-bottom: 1rem;"><i class="ph ph-desktop"></i> Autonomia</h3>
+                  <p class="editable-field" style="line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">Você no controle do seu conteúdo.</p>
+                  <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.85rem;">
+                    <li class="editable-field"><strong>Painel Admin:</strong> Área segura para alterar textos e fotos.</li>
+                    <li class="editable-field"><strong>Treinamento:</strong> Reunião de entrega e capacitação.</li>
+                    <li class="editable-field"><strong>Suporte Inicial:</strong> Garantia de estabilidade no ar.</li>
+                  </ul>
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 06. PORTFÓLIO -->
+        <div class="slide bg-dark">
+          <div class="content">
+            <span class="tag editable-field">05 · nosso impacto</span>
+            <h2 class="title editable-field">Resultados reais.<br><span style="color: var(--secondary);">Veja o que já construímos.</span></h2>
+            <p class="subtitle editable-field">Um portfólio diversificado de clientes que confiaram na tecnologia da CompAct Jr.</p>
+            
+            <div class="portfolio-grid">
+              <div class="portfolio-card p-card-1">
+                <div class="mockup-img"><i class="ph ph-shopping-bag"></i></div>
+                <div class="portfolio-info">
+                  <h3 class="editable-field" style="font-size: 1.1rem; color: var(--heading-light); margin-bottom: 0.3rem;">E-commerce Local</h3>
+                  <p class="editable-field" style="font-size: 0.85rem;">Plataforma completa de vendas com gestão de estoque e pagamentos.</p>
+                  <div class="portfolio-tags">
+                    <span class="ptag editable-field">Web</span>
+                    <span class="ptag editable-field">React</span>
+                  </div>
+                </div>
+              </div>
+              <div class="portfolio-card p-card-2">
+                <div class="mockup-img"><i class="ph ph-buildings"></i></div>
+                <div class="portfolio-info">
+                  <h3 class="editable-field" style="font-size: 1.1rem; color: var(--heading-light); margin-bottom: 0.3rem;">Site Institucional</h3>
+                  <p class="editable-field" style="font-size: 0.85rem;">Portal corporativo para prospecção B2B de uma indústria regional.</p>
+                  <div class="portfolio-tags">
+                    <span class="ptag editable-field">Landing Page</span>
+                    <span class="ptag editable-field">SEO</span>
+                  </div>
+                </div>
+              </div>
+              <div class="portfolio-card p-card-3">
+                <div class="mockup-img"><i class="ph ph-chart-line-up"></i></div>
+                <div class="portfolio-info">
+                  <h3 class="editable-field" style="font-size: 1.1rem; color: var(--heading-light); margin-bottom: 0.3rem;">Dashboard Gerencial</h3>
+                  <p class="editable-field" style="font-size: 0.85rem;">Sistema web fechado para controle de fluxo de caixa e relatórios.</p>
+                  <div class="portfolio-tags">
+                    <span class="ptag editable-field">Sistema Web</span>
+                    <span class="ptag editable-field">Node.js</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 07. JORNADA -->
+        <div class="slide bg-light">
+          <div class="content">
+            <span class="tag editable-field">06 · o processo</span>
+            <h2 class="title editable-field">Os passos do projeto</h2>
+            <p class="subtitle editable-field" style="margin-bottom: 0.5rem;">Uma metodologia clara, passo a passo.</p>
+            
+            <div class="editor-ui-element timeline-controls">
+              <button class="editor-btn" style="background: rgba(0, 167, 219, 0.1); color: var(--primary-light); border: 1px solid var(--secondary);" onclick="addJourneyStep()"><i class="ph ph-plus"></i> Adicionar Fase</button>
+              <button class="editor-btn" style="background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid #fca5a5;" onclick="removeJourneyStep()"><i class="ph ph-minus"></i> Remover Fase</button>
+            </div>
+
+            <div class="timeline" id="timeline-container">
+              <div class="time-node active" onclick="updateJourney(0, this)">
+                <div class="time-circle">1</div>
+                <div class="time-label editable-field">Diagnóstico</div>
+              </div>
+              <div class="time-node" onclick="updateJourney(1, this)">
+                <div class="time-circle">2</div>
+                <div class="time-label editable-field">Wireframe</div>
+              </div>
+              <div class="time-node" onclick="updateJourney(2, this)">
+                <div class="time-circle">3</div>
+                <div class="time-label editable-field">Design (UI)</div>
+              </div>
+              <div class="time-node" onclick="updateJourney(3, this)">
+                <div class="time-circle">4</div>
+                <div class="time-label editable-field">Código</div>
+              </div>
+              <div class="time-node" onclick="updateJourney(4, this)">
+                <div class="time-circle">5</div>
+                <div class="time-label editable-field">Entrega</div>
+              </div>
+            </div>
+
+            <div class="time-desc-box" id="journey-desc-box" style="position: relative;">
+               <div id="desc-0" class="journey-desc-item" style="display: block;">
+                  <h3 class="editable-field" style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 1.1rem;">Fase 1: Diagnóstico e Planejamento</h3>
+                  <p class="editable-field" style="color: var(--text-dark); line-height: 1.5; font-size: 0.9rem;">Reunião inicial (Kick-off) para mapeamento completo de requisitos e definição de regras de negócio.</p>
+               </div>
+               <div id="desc-1" class="journey-desc-item" style="display: none;">
+                  <h3 class="editable-field" style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 1.1rem;">Fase 2: Arquitetura do Sistema</h3>
+                  <p class="editable-field" style="color: var(--text-dark); line-height: 1.5; font-size: 0.9rem;">Estruturamos o esqueleto do projeto focando na usabilidade (UX) e jornada lógica.</p>
+               </div>
+               <div id="desc-2" class="journey-desc-item" style="display: none;">
+                  <h3 class="editable-field" style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 1.1rem;">Fase 3: Design e Identidade</h3>
+                  <p class="editable-field" style="color: var(--text-dark); line-height: 1.5; font-size: 0.9rem;">Aplicamos sua identidade visual no esqueleto aprovado gerando um layout 100% fiel à versão final.</p>
+               </div>
+               <div id="desc-3" class="journey-desc-item" style="display: none;">
+                  <h3 class="editable-field" style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 1.1rem;">Fase 4: Desenvolvimento Técnico</h3>
+                  <p class="editable-field" style="color: var(--text-dark); line-height: 1.5; font-size: 0.9rem;">Transformamos o planejamento em sistema e implementamos as lógicas de backend/frontend.</p>
+               </div>
+               <div id="desc-4" class="journey-desc-item" style="display: none;">
+                  <h3 class="editable-field" style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 1.1rem;">Fase 5: Testes e Homologação</h3>
+                  <p class="editable-field" style="color: var(--text-dark); line-height: 1.5; font-size: 0.9rem;">Homologação em ambiente de teste para revisão. Após aprovação, entregamos o produto final.</p>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 08. INVESTIMENTO -->
+        <div class="slide bg-dark">
+          <div class="content">
+            <span class="tag editable-field">07 · investimento</span>
+            <h2 class="title editable-field">Transparência e <br><span style="color: var(--secondary);">Custo-Benefício</span></h2>
+            <p class="subtitle editable-field">Ao contratar a CompAct Jr., você fomenta o empreendedorismo universitário e recebe uma entrega de excelência.</p>
+            
+            <div class="grid-2" style="align-items: center; gap: 3rem;">
+              <div class="invest-box">
+                <span class="strike-price editable-field">Valor de Mercado: R$ 5.500</span>
+                <div class="final-price">
+                  <span class="currency">R$</span><span class="editable-field">2.400</span>
+                </div>
+                <p class="editable-field" style="font-size: 0.8rem; color: #94A3B8; margin-top: 1rem;">Pagamento referente a todo o escopo apresentado. Sem taxas surpresas.</p>
+              </div>
+
+              <div>
+                <h3 class="editable-field" style="font-size: 1.1rem; margin-bottom: 1.2rem; color: var(--heading-light); display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-credit-card" style="color: var(--secondary);"></i> Formas de Pagamento</h3>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem;">
+                  <li style="display: flex; align-items: flex-start; gap: 0.8rem;">
+                    <i class="ph ph-check-square" style="color: var(--secondary); margin-top: 2px; font-size: 1.2rem;"></i> 
+                    <span class="editable-field"><strong>Parcelamento:</strong> Condições flexíveis durante os meses de execução.</span>
+                  </li>
+                  <li style="display: flex; align-items: flex-start; gap: 0.8rem;">
+                    <i class="ph ph-check-square" style="color: var(--secondary); margin-top: 2px; font-size: 1.2rem;"></i> 
+                    <span class="editable-field"><strong>Facilidade:</strong> PIX ou Boleto Bancário.</span>
+                  </li>
+                  <li style="display: flex; align-items: flex-start; gap: 0.8rem;">
+                    <i class="ph ph-check-square" style="color: var(--secondary); margin-top: 2px; font-size: 1.2rem;"></i> 
+                    <span class="editable-field"><strong>Segurança Contábil:</strong> Emissão 100% regular de Notas Fiscais.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 09. FECHAMENTO -->
+        <div class="slide bg-dark">
+          <div class="content" style="text-align: center;">
+            <div style="width: 80px; height: 80px; border-radius: 4px; background: rgba(0, 167, 219, 0.1); border: 2px solid var(--secondary); margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center;">
+              <i class="ph ph-handshake" style="font-size: 3rem; color: var(--secondary);"></i>
+            </div>
+            <h2 class="title editable-field" style="font-size: 2.5rem;">Vamos trabalhar juntos?</h2>
+            <p class="subtitle editable-field" style="margin: 0 auto 2.5rem;">A equipe da CompAct Jr. está pronta para dar o start. O próximo passo é validar esta proposta para redigirmos o contrato.</p>
+            
+            <button class="nav-btn editable-field" style="background: var(--secondary); border: none; color: var(--heading-dark); font-size: 1.1rem; padding: 1.2rem 3rem; margin: 0 auto; transition: 0.3s; font-weight: 800;" onclick="alert('Direcionando para o contato comercial da EJ...')">
+              Aprovar Proposta
+            </button>
+            <p class="editable-field" style="font-size: 0.8rem; color: #64748B; margin-top: 1.5rem;">Qualquer dúvida, contate o(a) Assessor(a) de Vendas responsável pelo seu atendimento.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <div id="navbar">
+      <button class="nav-btn" id="btnPrev" onclick="navSlide(-1)">
+        <i class="ph ph-caret-left"></i> Voltar
+      </button>
+      <div id="dots"></div>
+      <button class="nav-btn nav-btn-next" id="btnNext" onclick="navSlide(1)">
+        Avançar <i class="ph ph-caret-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Script JS do projeto -->
+  <script src="js/script.js"></script>
+</body>
+</html>
